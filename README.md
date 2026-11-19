@@ -67,9 +67,9 @@ Why GHDSS represents a major evolution over legacy amateur emergency systems (su
 
 The standard is organized into two synchronized companion specifications:
 
-1. 📄 **[GHDSS Protocol Standard v1.0.0 (Layer 3)](GHDSS_Protocol_Standard.md):**  
+1. 📄 **[GHDSS Protocol Standard v_*.*.* (Layer 3)](GHDSS_Protocol_Standard.md):**  
    The authoritative normative specification defining packet bitfields, state logic, registries (Hazard, Role, Capability), canonical algorithms in pseudo-code (Base40, Maidenhead, CRC-16), and official hex test vectors.
-2. 📄 **[GHDSS Implementation Guide v1.0.0 (Terminals & HMI)](GHDSS_Implementation_Guide.md):**  
+2. 📄 **[GHDSS Implementation Guide v_*.*.* (Terminals & HMI)](GHDSS_Implementation_Guide.md):**  
    The developer guide for building client software, detailing the formal state machine transition matrix, the 3-second safety button rule, acoustic alarms, Gateway CAP mappings, and recommended IARU emergency frequencies.
 
 ---
@@ -77,3 +77,5 @@ The standard is organized into two synchronized companion specifications:
 ## 4. Community & Open Standards
 
 GHDSS is developed as an open, royalty-free standard for the global amateur radio community. Contributions, software implementations, and field test feedback from national amateur radio societies (IARU member societies, ARES, EmComm, SAR teams) are warmly welcomed.
+
+Author: Adrian Florescu YO3HJV
