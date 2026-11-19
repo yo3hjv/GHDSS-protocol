@@ -29,7 +29,7 @@ Why GHDSS represents a major evolution over legacy amateur emergency systems (su
 * **Signaling vs. High-Volume Handoff:** GHDSS is engineered strictly as an alerting and channel coordination layer; high-volume bulk data (casualty rosters, images, documents) is smoothly handed off via `DATA_SESSION_REQUEST` to dedicated Layer 2 ARQ channels (VARA ARQ / Winlink).
 
 ### 🌐 2. Pure Layer 3 Design (Modem-Agnostic)
-* Decoupled from physical modulation: GHDSS runs identically across **VARA HF/FM**, **Packet Radio (AX.25 / FX.25)**, **FreeDATA**, and **ARDOP**, utilizing their native Broadcast FEC (Forward Error Correction) engines.
+* Decoupled from physical modulation: GHDSS runs identically across **VARA HF/FM**, **Packet Radio (AX.25 / FX.25)**, **LoRa (SX1262 / SX1276)**, **FreeDATA**, and **ARDOP**, utilizing their native Broadcast FEC (Forward Error Correction) engines.
 
 ### 🛡️ 3. Two-Tier Channel Sensing (Listen Before Talk — LBT)
 * Prevents packet collisions on shared simplex channels.
@@ -67,9 +67,9 @@ Why GHDSS represents a major evolution over legacy amateur emergency systems (su
 
 The standard is organized into two synchronized companion specifications:
 
-1. 📄 **[GHDSS Protocol Standard v_*.*.* (Layer 3)](GHDSS_Protocol_Standard.md):**  
+1. 📄 **[GHDSS Protocol Standard v1.0.0 (Layer 3)](GHDSS_Protocol_Standard_v_x.x.x.md):**  
    The authoritative normative specification defining packet bitfields, state logic, registries (Hazard, Role, Capability), canonical algorithms in pseudo-code (Base40, Maidenhead, CRC-16), and official hex test vectors.
-2. 📄 **[GHDSS Implementation Guide v_*.*.* (Terminals & HMI)](GHDSS_Implementation_Guide.md):**  
+2. 📄 **[GHDSS Implementation Guide v1.0.0 (Terminals & HMI)](GHDSS_Implementation_Guide.md):**  
    The developer guide for building client software, detailing the formal state machine transition matrix, the 3-second safety button rule, acoustic alarms, Gateway CAP mappings, and recommended IARU emergency frequencies.
 
 ---
