@@ -1,1 +1,125 @@
+================================================================================
+GHDSS - GLOBAL HAMRADIO DISTRESS AND SAFETY SYSTEM
+FIELD & BENCH TEST LOG REPORT
+================================================================================
+Protocol Standard:  GHDSS Layer 3 Specification Edition 1.0.0
+Codec Library:      ghdss_codec v1.0.0 (CRC-16 CCITT 0x1021, Base40 Callsign Compression)
+Date / Time:        2026-11-19 23:48 UTC+2
+Test Status:        PASSED - 100% OPERATIONAL OVER-THE-AIR HANDSHAKE
+
+--------------------------------------------------------------------------------
+1. HARDWARE & TEST ENVIRONMENT
+--------------------------------------------------------------------------------
+Node A (Distress Sender):
+  - Hardware:       LilyGO TTGO LoRa32 V1 (No TFCard)
+  - MCU / RF:       ESP32 (ESP32-D0WDQ6) + Semtech SX1278
+  - Callsign / ID:  YO3HJV-7 (Role: OTHER / Civilian Distress)
+  - Display:        0.96" I2C SSD1306 OLED (SDA=21, SCL=22)
+
+Node B (Responder / Gateway / SAR):
+  - Hardware:       LilyGO TTGO LoRa32 V1 (No TFCard)
+  - MCU / RF:       ESP32 (ESP32-D0WDQ6) + Semtech SX1278
+  - Callsign / ID:  YO3SAR-1 (Role: SAR Responder / Gateway)
+  - Display:        0.96" I2C SSD1306 OLED (SDA=21, SCL=22)
+
+RF Physical Layer (LoRa Modulation - IARU Region 1 70cm Simplex):
+  - Frequency:      433.175 MHz
+  - Bandwidth:      125.0 kHz
+  - Spreading Fact: SF8
+  - Coding Rate:    4/5 (CR=5)
+  - Sync Word:      0x12 (GHDSS Custom LoRa Sync Word)
+  - TX Power:       +10 dBm
+
+--------------------------------------------------------------------------------
+2. TEST CASE 1: BILATERAL OVER-THE-AIR DISTRESS & ACK HANDSHAKE
+--------------------------------------------------------------------------------
+Trigger Method:     Manual Serial Command ('t') on Node A (YO3HJV-7)
+Simulation Goal:    Full end-to-end distress broadcasting, canonical framing,
+                    Base40 unpacking, GPS coordinate extraction, SAR automatic ACK,
+                    and sender distress state resolution.
+
+[TX 1] Node A -> Node B (DISTRESS ALERT PACKET):
+  - Packet Length:  52 bytes
+  - Time on Air:    188 ms
+  - Raw Hex Stream:
+    47 48 1C 0C 60 03 EA DE AC 73 C0 00 00 38 1C C0 00 43 CA 35 00 27 D4 4E 00
+    00 00 15 15 54 45 53 54 20 4D 45 44 49 43 41 4C 20 44 49 53 54 52 45 53 53
+    1A C5
+  - Decoded Header:
+    * Magic:        0x47 0x48 ("GH")
+    * Ver / Flags:  Version 1, Flags: ACK_REQUIRED (0x1C)
+    * Pri / Type:   DISTRESS (3) / ALERT (0) (0x0C)
+    * TTL / Hop:    TTL=3, Hop=0 (0x60)
+    * Message ID:   1002 (0x03EA)
+    * Originator:   Base40 packed -> YO3HJV-7
+  - Decoded Payload:
+    * Hazard Code:  0x04 (MEDICAL)
+    * Latitude:     +44.42677 deg (Raw: 4442677 / 0x0043CA35)
+    * Longitude:    +26.10254 deg (Raw: 2610254 / 0x0027D44E)
+    * Detail Text:  "TEST MEDICAL DISTRESS" (21 chars)
+    * CRC-16-CCITT: 0x1AC5 [VERIFIED VALID]
+
+[RX 1] Node B Reception & Signal Quality:
+  - RSSI:           -27.00 dBm
+  - SNR:            +12.00 dB
+  - Integrity:      CRC Check Passed, Decoded successfully.
+  - Action:         OLED updated with alert details & coordinates. Formulated ACK.
+
+[TX 2] Node B -> Node A (GHDSS ACKNOWLEDGEMENT):
+  - Packet Length:  26 bytes
+  - Time on Air:    116 ms
+  - Raw Hex Stream:
+    47 48 1C 10 20 07 D1 DE AC B7 14 00 00 09 DE AC 73 C0 00 00 38 03 EA 00 1F 03
+  - Decoded Header:
+    * Magic:        0x47 0x48 ("GH")
+    * Ver / Flags:  Version 1, RELAY_PERMITTED (0x1C)
+    * Pri / Type:   URGENT (2) / ACK (1) (0x10)
+    * TTL / Hop:    TTL=1, Hop=0 (0x20)
+    * Message ID:   2001 (0x07D1)
+    * Originator:   Base40 packed -> YO3SAR-1
+  - Decoded Payload:
+    * Ref Station:  Base40 packed -> YO3HJV-7
+    * Ref Msg ID:   1002 (0x03EA)
+    * Result Code:  0x00 (ACCEPTED / VALID)
+    * CRC-16-CCITT: 0x1F03 [VERIFIED VALID]
+
+[RX 2] Node A Confirmation & Resolution:
+  - RSSI:           -25.00 dBm
+  - SNR:            +12.00 dB
+  - Integrity:      CRC Check Passed. Ref Msg ID matched active distress (1002).
+  - State Change:   STATE_WAITING_ACK -> STATE_ACK_RECEIVED
+  - Visual:         OLED switched to "*** ACK RECEIVED! *** Alert Cleared!"
+  - LED:            Permanent ON (Indicating distress handled).
+  - Retransmission: Timers cancelled; zero redundant retries sent.
+
+--------------------------------------------------------------------------------
+3. PERFORMANCE & TIMING SUMMARY
+--------------------------------------------------------------------------------
+Total Alert Air-Time:       188 ms
+Responder Turnaround Delay: 100 ms
+Total ACK Air-Time:         116 ms
+Total Bilateral Handshake:  ~404 ms (from button press to confirmed resolution)
+
+--------------------------------------------------------------------------------
+4. HARDWARE PINOUT REFERENCE (VERIFIED FOR TTGO LORA32 V1 / V2.0)
+--------------------------------------------------------------------------------
+OLED Display (SSD1306 128x64):
+  - SDA:        GPIO 21
+  - SCL:        GPIO 22
+  - RST:        -1 (Unused / Managed internally)
+  - Address:    0x3C
+
+LoRa Transceiver (Semtech SX1278):
+  - SCK:        GPIO 5
+  - MISO:       GPIO 19
+  - MOSI:       GPIO 27
+  - NSS (CS):   GPIO 18
+  - DIO0 (IRQ): GPIO 26
+  - RESET:      GPIO 14
+  - DIO1:       GPIO 33
+
+Onboard Controls:
+  - PRG Button: GPIO 0 (Active LOW, internal pull-up)
+  - Blue LED:   GPIO 2 (Active HIGH)
+================================================================================
 
