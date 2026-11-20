@@ -4,7 +4,7 @@ FIELD & BENCH TEST LOG REPORT
 ================================================================================
 Protocol Standard:  GHDSS Layer 3 Specification Edition 1.0.0
 Codec Library:      ghdss_codec v1.0.0 (CRC-16 CCITT 0x1021, Base40 Callsign Compression)
-Date / Time:        2026-11-19 23:48 UTC+2
+Test Date & Time:   November 19, 2026, 23:48:15 (EET / UTC+2)
 Test Status:        PASSED - 100% OPERATIONAL OVER-THE-AIR HANDSHAKE
 
 --------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ Node A (Distress Sender):
 Node B (Responder / Gateway / SAR):
   - Hardware:       LilyGO TTGO LoRa32 V1 (No TFCard)
   - MCU / RF:       ESP32 (ESP32-D0WDQ6) + Semtech SX1278
-  - Callsign / ID:  YO3SAR-1 (Role: SAR Responder / Gateway)
+  - Callsign / ID:  YO3HJV-1 (Role: SAR Responder / Gateway)
   - Display:        0.96" I2C SSD1306 OLED (SDA=21, SCL=22)
 
 RF Physical Layer (LoRa Modulation - IARU Region 1 70cm Simplex):
@@ -33,6 +33,8 @@ RF Physical Layer (LoRa Modulation - IARU Region 1 70cm Simplex):
 --------------------------------------------------------------------------------
 2. TEST CASE 1: BILATERAL OVER-THE-AIR DISTRESS & ACK HANDSHAKE
 --------------------------------------------------------------------------------
+Code Archive:       TEST_BASIC_HANDSHAKE.rar
+Date & Time:        November 19, 2026, 23:48:15 UTC+2
 Trigger Method:     Manual Serial Command ('t') on Node A (YO3HJV-7)
 Simulation Goal:    Full end-to-end distress broadcasting, canonical framing,
                     Base40 unpacking, GPS coordinate extraction, SAR automatic ACK,
@@ -76,7 +78,7 @@ Simulation Goal:    Full end-to-end distress broadcasting, canonical framing,
     * Pri / Type:   URGENT (2) / ACK (1) (0x10)
     * TTL / Hop:    TTL=1, Hop=0 (0x20)
     * Message ID:   2001 (0x07D1)
-    * Originator:   Base40 packed -> YO3SAR-1
+    * Originator:   Base40 packed -> YO3SAR-1 (Configured to YO3HJV-1 in TEST_BASIC_HANDSHAKE.rar)
   - Decoded Payload:
     * Ref Station:  Base40 packed -> YO3HJV-7
     * Ref Msg ID:   1002 (0x03EA)
@@ -93,7 +95,41 @@ Simulation Goal:    Full end-to-end distress broadcasting, canonical framing,
   - Retransmission: Timers cancelled; zero redundant retries sent.
 
 --------------------------------------------------------------------------------
-3. PERFORMANCE & TIMING SUMMARY
+3. TEST CASE 2: ARQ RETRANSMISSION & TIMEOUT FAILOVER (NO ACK SCENARIO)
+--------------------------------------------------------------------------------
+Code Archive:       TEST_BASIC_HANDSHAKE.rar
+Date & Time:        November 20, 2026, 07:28:45 UTC+2
+Simulation Goal:    Verification of ARQ state machine when responder is offline
+                    or out of range. Validation of retransmission intervals (60s),
+                    dynamic CRC recalculation per retry (timestamp updating),
+                    and clean termination into failure state (STATE_NO_ACK).
+
+Sequence of Events:
+  - T=00:00 [TX Attempt 1] MsgID: 1002, Retry: 0 | Len: 52 B | CRC: 0xC2CF | ToA: 188 ms
+    Hex: 47 48 1C 0C 60 03 EA DE AC 73 C0 00 00 C0 1C C0 00 43 CA 35 00 27 D4 4E 00 00 00 17 15 54 45 53 54 20 4D 45 44 49 43 41 4C 20 44 49 53 54 52 45 53 53 C2 CF
+    State: Entered ACK wait window (60 seconds)
+
+  - T=01:00 [RETRY 1] ACK_WAIT_TIMER expired -> automatic trigger of Attempt 2
+    [TX Attempt 2] MsgID: 1002, Retry: 1 | Len: 52 B | CRC: 0x871A | ToA: 188 ms
+    Hex: 47 48 1C 0C 60 03 EA DE AC 73 C0 00 00 C0 1C C0 00 43 CA 35 00 27 D4 4E 00 00 00 53 15 54 45 53 54 20 4D 45 44 49 43 41 4C 20 44 49 53 54 52 45 53 53 87 1A
+    State: ACK wait timer re-armed (60 seconds)
+
+  - T=02:00 [RETRY 2] ACK_WAIT_TIMER expired -> automatic trigger of Attempt 3
+    [TX Attempt 3] MsgID: 1002, Retry: 2 | Len: 52 B | CRC: 0x7913 | ToA: 188 ms
+    Hex: 47 48 1C 0C 60 03 EA DE AC 73 C0 00 00 C0 1C C0 00 43 CA 35 00 27 D4 4E 00 00 00 8F 15 54 45 53 54 20 4D 45 44 49 43 41 4C 20 44 49 53 54 52 45 53 53 79 13
+    State: ACK wait timer re-armed (60 seconds)
+
+  - T=03:00 [FAIL] Maximum retries exhausted (MAX_RETRY_COUNT = 3)
+    Event: "[FAIL] Maximum retries reached without ACK!"
+    State: Transitioned to STATE_NO_ACK.
+    OLED Display: "NO ACK RECEIVED / Max retries reached! / Check radio/coverage"
+    Behavior: Transmitter halts, channel protected against endless flooding,
+              user alerted on physical display.
+
+Test 2 Outcome:     PASSED - 100% compliant with GHDSS Specification Section 11 (Retransmissions).
+
+--------------------------------------------------------------------------------
+4. PERFORMANCE & TIMING SUMMARY
 --------------------------------------------------------------------------------
 Total Alert Air-Time:       188 ms
 Responder Turnaround Delay: 100 ms
@@ -101,7 +137,7 @@ Total ACK Air-Time:         116 ms
 Total Bilateral Handshake:  ~404 ms (from button press to confirmed resolution)
 
 --------------------------------------------------------------------------------
-4. HARDWARE PINOUT REFERENCE (VERIFIED FOR TTGO LORA32 V1 / V2.0)
+5. HARDWARE PINOUT REFERENCE (VERIFIED FOR TTGO LORA32 V1 / V2.0)
 --------------------------------------------------------------------------------
 OLED Display (SSD1306 128x64):
   - SDA:        GPIO 21
@@ -122,4 +158,3 @@ Onboard Controls:
   - PRG Button: GPIO 0 (Active LOW, internal pull-up)
   - Blue LED:   GPIO 2 (Active HIGH)
 ================================================================================
-
